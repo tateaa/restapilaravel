@@ -2,82 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
-use Illuminate\Http\Request;
+use App\Services\PostService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 class PostController extends Controller
 {
-    /**    
-     * GET /posts
-     * Ambil semua posts
-     */
-    public function index(): JsonResponse
+    use AuthorizesRequests;
+    public function __construct(
+        private readonly PostService $postService,
+    ) {}
+
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $posts = Post::all();
-        return response()->json($posts);
+        $perPage = min($request->integer('per_page', 20), 100);
+
+        $posts = Post::with('user')
+                     ->withCount('comments')
+                     ->latest()
+                     ->paginate($perPage);
+
+        return PostResource::collection($posts);
     }
 
-    /**
-     * POST /posts
-     * Tambah post baru
-     */
-    public function store(Request $request): JsonResponse
+    public function store(StorePostRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title'   => 'required|string|max:255',
-            'status'  => 'required|string',
-            'content' => 'nullable|string',
-            'user_id' => 'nullable|integer',
-        ]);
+        // user_id diambil dari token — BUKAN dari input user (cegah IDOR)
+        $post = $this->postService->create(
+            data: $request->validated(),
+            userId: $request->user()->id,
+        );
 
-        $post = Post::create($validated);
-
-        return response()->json([
-            ...$post->toArray(),
-            'link' => "/posts/{$post->id}",
-        ], 201);
+        return (new PostResource($post->load('user')))->response()->setStatusCode(201);
     }
 
-    /**
-     * GET /posts/{id}
-     * Ambil satu post berdasarkan ID
-     */
-    public function show(Post $post): JsonResponse
+    public function show(Post $post): PostResource
     {
-        return response()->json($post);
+        // Route Model Binding — otomatis 404 jika tidak ada
+        $post->load('user', 'comments');
+        return new PostResource($post);
     }
 
-    /**
-     * PUT /posts/{id}
-     * Update post berdasarkan ID
-     */
-    public function update(Request $request, Post $post): JsonResponse
+    public function update(UpdatePostRequest $request, Post $post): PostResource
     {
-        $validated = $request->validate([
-            'title'   => 'sometimes|string|max:255',
-            'status'  => 'sometimes|string',
-            'content' => 'sometimes|nullable|string',
-            'user_id' => 'sometimes|nullable|integer',
-        ]);
-
-        $post->update($validated);
-
-        return response()->json($post->fresh());
+        $this->authorize('update', $post);
+        $post->update($request->validated());
+        return new PostResource($post->fresh('user'));
     }
 
-    /**
-     * DELETE /posts/{id}
-     * Hapus post berdasarkan ID
-     */
-    public function destroy(Post $post): JsonResponse
+    public function destroy(Post $post): Response
     {
-        $postId = $post->id;
+        $this->authorize('delete', $post);
         $post->delete();
-
-        return response()->json([
-            'id'      => $postId,
-            'deleted' => 'true',
-        ]);
+        return response()->noContent(); // HTTP 204
     }
 }

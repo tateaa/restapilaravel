@@ -47,7 +47,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 120, // token kedaluwarsa dalam 120 menit
 
     /*
     |--------------------------------------------------------------------------
