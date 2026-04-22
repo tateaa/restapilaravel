@@ -1,0 +1,10 @@
+$kind: http-request
+name: List Comments
+method: GET
+url: '{{base_url}}/api/posts/{{post_id}}/comments'
+order: 1000
+queryParams:
+  - key: per_page
+    value: '20'
+    description: Optional. Max 100.
+    disabled: true

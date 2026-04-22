@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Comment
+method: GET
+url: '{{base_url}}/api/posts/{{post_id}}/comments/{{comment_id}}'
+order: 2000

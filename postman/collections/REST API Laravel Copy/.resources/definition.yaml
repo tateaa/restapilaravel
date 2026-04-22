@@ -1,0 +1,9 @@
+$kind: collection
+id: aB0a88cBc3D4bb112f0b5ba2
+name: REST API Laravel Copy
+description: Laravel REST API with Sanctum authentication. Covers Auth, Posts, and Comments endpoints.
+variables:
+  base_url: http://localhost
+  token: ""
+  post_id: "1"
+  comment_id: "1"

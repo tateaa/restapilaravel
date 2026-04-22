@@ -1,0 +1,12 @@
+$kind: collection
+name: REST API Laravel
+description: Laravel REST API with Sanctum authentication. Covers Auth, Posts, and Comments endpoints.
+variables:
+  - key: base_url
+    value: 'http://localhost'
+  - key: token
+    value: ''
+  - key: post_id
+    value: '1'
+  - key: comment_id
+    value: '1'

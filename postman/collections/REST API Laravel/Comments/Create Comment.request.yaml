@@ -1,0 +1,19 @@
+$kind: http-request
+name: Create Comment
+method: POST
+url: '{{base_url}}/api/posts/{{post_id}}/comments'
+order: 3000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "comment": "This is a great post!"
+    }
